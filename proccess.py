@@ -1,9 +1,27 @@
 import os
 import subprocess
 import shutil
+from datetime import datetime
 
 DRONE_DRIVE = "/mnt/usb/DCIM/DJI_001"
 TARGET_PATH = "/srv/storage/raw_footage"
+
+def format_dji_filename(dji_filename):
+    """
+    Extract timestamp from DJI filename and format as YYYY.MM.DD_HH.MM
+    Example: DJI_20251230055808_0001_D.MP4 -> 2025.12.30_05.58
+    """
+    # Extract the timestamp part: DJI_20251230055808_0001_D.MP4 -> 20251230055808
+    timestamp_str = dji_filename.split('_')[1]  # Get the YYYYMMDDHHMMSS part
+    
+    # Parse the timestamp: 20251230055808 -> year=2025, month=12, day=30, hour=05, minute=58, second=08
+    year = timestamp_str[:4]
+    month = timestamp_str[4:6]
+    day = timestamp_str[6:8]
+    hour = timestamp_str[8:10]
+    minute = timestamp_str[10:12]
+    
+    return f"{year}.{month}.{day}_{hour}.{minute}"
 
 # 1. Merge split footage from drone drive to local storage
 
@@ -77,9 +95,9 @@ for i, sequence in enumerate(footage_files):
         # Build full paths for input files
         input_paths = [os.path.join(DRONE_DRIVE, file) for file in sequence]
         
-        # Generate output filename
-        base_name = sequence[0].split('.')[0]  # Get base name without extension
-        output_file = os.path.join(TARGET_PATH, f"{base_name}_merged.mp4")
+        # Generate output filename using formatted timestamp
+        formatted_name = format_dji_filename(sequence[0])
+        output_file = os.path.join(TARGET_PATH, f"{formatted_name}.mp4")
         
         print(f"Merging sequence {i+1}: {sequence}")
         if merge_mp4_sequence(input_paths, output_file):
@@ -87,8 +105,9 @@ for i, sequence in enumerate(footage_files):
         else:
             print(f"✗ Failed to merge sequence {i+1}")
     else:
-        # Single file, just copy it
+        # Single file, copy with formatted name
         source = os.path.join(DRONE_DRIVE, sequence[0])
-        dest = os.path.join(TARGET_PATH, sequence[0])
+        formatted_name = format_dji_filename(sequence[0])
+        dest = os.path.join(TARGET_PATH, f"{formatted_name}.mp4")
         shutil.copy2(source, dest)
-        print(f"✓ Copied single file: {sequence[0]}")
+        print(f"✓ Copied single file: {sequence[0]} -> {formatted_name}.mp4")
