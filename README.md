@@ -1,6 +1,9 @@
 # DJI Drone files tool
+This tool copies/merge splitted files from the drone footage into the target folder.
 
 ## Mount drone DCIM folder
+sudo mkdir -p /mnt/usb
+sudo mount /dev/sdc /mnt/usb
 
 ## Copy to server storage
 mkdir -p /srv/storage/raw_footage
